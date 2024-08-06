@@ -6,6 +6,9 @@ import { TextField, TextFieldProps } from '@mui/material';
 import { Department, Employee, Group } from '../helpers/Types';
 import { TreeViewBaseItem } from '@mui/x-tree-view/models/items';
 import { PersonsContext, PersonsContextType, PersonsProvider } from '../context/PersonsContext';
+import personIcon from '../assets/img/navbar/pessoas/person.png';
+import departmentsIcon from '../assets/img/navbar/pessoas/departments.png';
+import groupsIcon from '../assets/img/navbar/pessoas/groups.png';
 
 // Define a interface para as propriedades do componente CustomSearchBox
 function CustomSearchBox(props: TextFieldProps) {
@@ -27,6 +30,7 @@ function CustomSearchBox(props: TextFieldProps) {
 // Define a interface para as propriedades do componente TreeViewData
 interface TreeViewDataProps {
   onSelectEmployees: (employeeIds: string[]) => void;
+  entity: "all" | "employees" | "external employees" | "users" | "visitors" | "contacts" | "temporaries";
 }
 
 // Função para filtrar os itens
@@ -64,8 +68,10 @@ function collectAllExpandableItemIds(items: TreeViewBaseItem[]): string[] {
 }
 
 // Define o componente
-export function TreeViewData({ onSelectEmployees }: TreeViewDataProps) {
-  const { data, fetchAllData } = useContext(PersonsContext) as PersonsContextType;
+export function TreeViewData({ onSelectEmployees, entity }: TreeViewDataProps) {
+  const { data,
+    fetchAllData,
+  } = useContext(PersonsContext) as PersonsContextType;
   const [items, setItems] = useState<TreeViewBaseItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredItems, setFilteredItems] = useState<TreeViewBaseItem[]>([]);
@@ -73,10 +79,13 @@ export function TreeViewData({ onSelectEmployees }: TreeViewDataProps) {
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([]);
   const selectionChangedRef = { current: false };
 
-  // Busca os dados ao carregar o componente
+  // Busca os dados ao carregar o componente de acordo com a entidade
   useEffect(() => {
-    fetchAllData();
-  }, [fetchAllData]);
+    const fetchData = async () => {
+      await fetchAllData(entity);
+    };
+    fetchData();
+  }, [entity, fetchAllData]);
 
   // Define e mapeia os dados para os itens da árvore
   useEffect(() => {
@@ -126,11 +135,13 @@ export function TreeViewData({ onSelectEmployees }: TreeViewDataProps) {
 
     const buildDepartmentTree = (dept: Department) => ({
       id: `department-${dept.departmentID}`,
+      icon: <img src={departmentsIcon} alt="Department Icon" style={{ width: 24, height: 24 }} />,
       label: dept.name || 'Sem Nome',
       children: [
         ...dept.children.map(buildDepartmentTree),
         ...allEmployees.filter((emp: Employee) => emp.departmentId === dept.departmentID).map((emp: Employee) => ({
           id: `dept-${dept.departmentID}-emp-${emp.employeeID}`,
+          icon: <img src={personIcon} alt="Person Icon" style={{ width: 24, height: 24 }} />,
           label: emp.name,
         })),
       ],
@@ -140,20 +151,24 @@ export function TreeViewData({ onSelectEmployees }: TreeViewDataProps) {
 
     const groupItems = groups.map((group: Group) => ({
       id: `group-${group.groupID}`,
+      icon: <img src={groupsIcon} alt="Group Icon" style={{ width: 24, height: 24 }} />,
       label: group.name || 'Sem Nome',
       children: allEmployees.filter(emp => emp.groupId === group.groupID).map((emp: Employee) => ({
         id: `group-${group.groupID}-emp-${emp.employeeID}`,
+        icon: <img src={personIcon} alt="Person Icon" style={{ width: 24, height: 24 }} />,
         label: emp.name || 'Sem Nome',
       })),
     }));
 
     const unassignedDepartmentItems = unassignedDept.map((emp: Employee) => ({
       id: `empd-${emp.employeeID}`,
+      icon: <img src={personIcon} alt="Person Icon" style={{ width: 24, height: 24 }} />,
       label: emp.name || 'Sem Nome',
     }));
 
     const unassignedGroupItems = unassignedGroup.map((emp: Employee) => ({
       id: `empg-${emp.employeeID}`,
+      icon: <img src={personIcon} alt="Person Icon" style={{ width: 24, height: 24 }} />,
       label: emp.name || 'Sem Nome',
     }));
 
@@ -165,12 +180,14 @@ export function TreeViewData({ onSelectEmployees }: TreeViewDataProps) {
           { id: 'departments', label: 'DEPARTAMENTOS', children: departmentItems },
           ...(unassignedDepartmentItems.length > 0 ? [{
             id: 'unassignedDept',
+            icon: <img src={departmentsIcon} alt="Department Icon" style={{ width: 24, height: 24 }} />,
             label: 'SEM DEPARTAMENTO',
             children: unassignedDepartmentItems,
           }] : []),
           { id: 'groups', label: 'GRUPOS', children: groupItems },
           ...(unassignedGroupItems.length > 0 ? [{
             id: 'unassignedGroup',
+            icon: <img src={groupsIcon} alt="Group Icon" style={{ width: 24, height: 24 }} />,
             label: 'SEM GRUPO',
             children: unassignedGroupItems,
           }] : []),

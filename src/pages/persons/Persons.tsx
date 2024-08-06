@@ -8,7 +8,7 @@ import Split from 'react-split';
 import '../../css/PagesStyles.css';
 import { CreateModalEmployees } from '../../modals/CreateModalEmployees';
 import { employeeFields } from '../../helpers/Fields';
-import { Employee } from '../../helpers/Types';
+import { Employee, EmployeeCard } from '../../helpers/Types';
 import { ColumnSelectorModal } from '../../modals/ColumnSelectorModal';
 import { ExportButton } from '../../components/ExportButton';
 import { PersonsContext, PersonsContextType, PersonsProvider } from '../../context/PersonsContext';
@@ -23,6 +23,7 @@ export const Persons = () => {
         fetchAllData,
         fetchAllEmployees,
         handleAddEmployee,
+        handleAddEmployeeCard
     } = useContext(PersonsContext) as PersonsContextType;
     const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([]);
     const [showAddModal, setShowAddModal] = useState(false);
@@ -35,11 +36,6 @@ export const Persons = () => {
     const defaultColumns = ['enrollNumber', 'name', 'shortName'];
     const [initialData, setInitialData] = useState<Employee | null>(null);
 
-    // Busca os departamentos, grupos e funcionários
-    useEffect(() => {
-        fetchAllData()
-    }, [fetchAllData]);
-
     // Define a função de busca dos funcionários
     const fetchEmployees = () => {
         fetchAllEmployees({
@@ -49,24 +45,30 @@ export const Persons = () => {
         });
     };
 
-    // Função para adicionar um funcionário
-    const addEmployee = async (employee: Employee) => {
-        await handleAddEmployee(employee);
-        setShowAddModal(false);
+    // Função para adicionar um funcionário e um cartão
+    const addEmployeeAndCard = async (employee: Partial<Employee>, card: Partial<EmployeeCard>) => {
+        await handleAddEmployee(employee as Employee);
+        const employees = await fetchAllEmployees();
+        const lastEmployee = employees[employees.length - 1];
+        const employeeCard = {
+            ...card,
+            employeeID: lastEmployee.employeeID
+        };
+        await handleAddEmployeeCard(employeeCard as EmployeeCard);
         refreshEmployees();
-    }
-
-    // Atualiza a lista de funcionários ao carregar a página
-    useEffect(() => {
-        fetchAllData();
-        fetchEmployees();
-    }, []);
+        setShowAddModal(false);
+    };
 
     // Função para selecionar funcionários
     const handleSelectEmployees = (employeeIds: string[]) => {
         setSelectedEmployeeIds(employeeIds);
         setShowAllEmployees(employeeIds.length === 0);
     };
+
+    // Busca todos os dados
+    useEffect(() => {
+        fetchEmployees();
+    }, []);
 
     // Função para atualizar a lista de funcionários
     const refreshEmployees = () => {
@@ -119,7 +121,7 @@ export const Persons = () => {
                 <div className="content-container">
                     <Split className='split' sizes={[20, 80]} minSize={100} expandToMin={true} gutterSize={15} gutterAlign="center" snapOffset={0} dragInterval={1}>
                         <div className="treeview-container">
-                            <TreeViewData onSelectEmployees={handleSelectEmployees} />
+                            <TreeViewData onSelectEmployees={handleSelectEmployees} entity='all' />
                         </div>
                         <div className="datatable-container">
                             <div className="datatable-title-text">
@@ -163,7 +165,7 @@ export const Persons = () => {
                         title="Adicionar Pessoa"
                         open={showAddModal}
                         onClose={() => setShowAddModal(false)}
-                        onSave={addEmployee}
+                        onSave={addEmployeeAndCard}
                         fields={employeeFields}
                         initialValues={initialData || {}}
                     />

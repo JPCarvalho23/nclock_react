@@ -1,7 +1,7 @@
-import { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
+import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 import { Department, Employee, EmployeeAttendanceTimes, Group } from "../helpers/Types";
-import { fetchWithAuth } from "../components/FetchWithAuth";
 import { toast } from "react-toastify";
+import * as apiService from "../helpers/apiService";
 
 // Define a interface para o estado de dados
 interface DataState {
@@ -21,6 +21,7 @@ export interface AttendanceContextType {
     fetchAllAttendances: (options?: FetchOptions) => Promise<EmployeeAttendanceTimes[]>;
     fetchAllAttendancesBetweenDates: (options?: FetchOptions) => Promise<EmployeeAttendanceTimes[]>;
     handleAddAttendance: (attendance: EmployeeAttendanceTimes) => Promise<void>;
+    handleAddImportedAttendance: (attendance: Partial<EmployeeAttendanceTimes>) => Promise<void>;
     handleUpdateAttendance: (attendance: EmployeeAttendanceTimes) => Promise<void>;
     handleDeleteAttendance: (attendanceTimeId: string) => Promise<void>;
 }
@@ -59,11 +60,7 @@ export const AttendanceProvider = ({ children }: { children: ReactNode }) => {
     // Função para buscar todas as assiduidades
     const fetchAllAttendances = useCallback(async (options?: FetchOptions): Promise<EmployeeAttendanceTimes[]> => {
         try {
-            const response = await fetchWithAuth('Attendances/GetAllAttendances');
-            if (!response.ok) {
-                return [];
-            }
-            let data = await response.json();
+            let data = await apiService.fetchAllAttendances();
             if (options?.filterFunc) {
                 data = options.filterFunc(data);
             }
@@ -80,11 +77,7 @@ export const AttendanceProvider = ({ children }: { children: ReactNode }) => {
     // Função para buscar as assiduidades entre datas
     const fetchAllAttendancesBetweenDates = useCallback(async (options?: FetchOptions): Promise<EmployeeAttendanceTimes[]> => {
         try {
-            const response = await fetchWithAuth(`Attendances/GetAttendanceTimesBetweenDates?fromDate=${startDate}&toDate=${endDate}`);
-            if (!response.ok) {
-                return [];
-            }
-            let data = await response.json();
+            let data = await apiService.fetchAllAttendancesBetweenDates(startDate, endDate);
             if (options?.filterFunc) {
                 data = options.filterFunc(data);
             }
@@ -101,19 +94,20 @@ export const AttendanceProvider = ({ children }: { children: ReactNode }) => {
     // Função para adicionar uma nova assiduidade
     const handleAddAttendance = async (attendances: EmployeeAttendanceTimes) => {
         try {
-            const response = await fetchWithAuth('Attendances/CreatedAttendanceTime', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(attendances)
-            });
-            if (!response.ok) {
-                return;
-            }
-            const newAttendance = await response.json();
+            const newAttendance = await apiService.addAttendance(attendances);
             setAttendance([...attendance, newAttendance]);
             toast.success(newAttendance.value || 'assiduidade adicionada com sucesso!');
+        } catch (error) {
+            console.error('Erro ao adicionar nova assiduidade:', error);
+        }
+    };
+
+    // Função para adicionar assiduidades importadas
+    const handleAddImportedAttendance = async (attendances: Partial<EmployeeAttendanceTimes>) => {
+        try {
+            const newAttendance = await apiService.addImportedAttendance(attendances);
+            setAttendance([...attendance, newAttendance]);
+            toast.success(newAttendance.value || 'assiduidades adicionadas com sucesso!');
         } catch (error) {
             console.error('Erro ao adicionar nova assiduidade:', error);
         }
@@ -122,18 +116,7 @@ export const AttendanceProvider = ({ children }: { children: ReactNode }) => {
     // Função para atualizar uma assiduidade
     const handleUpdateAttendance = async (attendances: EmployeeAttendanceTimes) => {
         try {
-            const response = await fetchWithAuth(`Attendances/UpdatedAttendanceTime?attendanceTimeId=${attendances.attendanceTimeId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(attendances)
-            });
-
-            if (!response.ok) {
-                return;
-            }
-            const updatedAttendance = await response.json();
+            const updatedAttendance = await apiService.updateAttendance(attendances);
             setAttendance(prevAttendance => prevAttendance.map(att => att.attendanceID === updatedAttendance.attendanceID ? updatedAttendance : att));
             toast.success(updatedAttendance.value || 'assiduidade atualizada com sucesso!');
         } catch (error) {
@@ -144,17 +127,7 @@ export const AttendanceProvider = ({ children }: { children: ReactNode }) => {
     // Função para deletar uma assiduidade
     const handleDeleteAttendance = async (attendanceTimeId: string) => {
         try {
-            const response = await fetchWithAuth(`Attendances/DeleteAttendanceTime?attendanceTimeId=${attendanceTimeId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (!response.ok) {
-                return;
-            }
-            const deleteAttendance = await response.json();
+            const deleteAttendance = await apiService.deleteAttendance(attendanceTimeId);
             toast.success(deleteAttendance.value || 'assiduidade apagada com sucesso!');
         } catch (error) {
             console.error('Erro ao apagar assiduidade:', error);
@@ -172,6 +145,7 @@ export const AttendanceProvider = ({ children }: { children: ReactNode }) => {
         fetchAllAttendances,
         fetchAllAttendancesBetweenDates,
         handleAddAttendance,
+        handleAddImportedAttendance,
         handleUpdateAttendance,
         handleDeleteAttendance
     };

@@ -112,7 +112,7 @@ export const employeeAttendanceTimesFields = [
     { key: 'deviceId', label: 'Dispositivo', type: 'dropdown' },
     { key: 'deviceNumber', label: 'Número do Dispositivo', type: 'number' },
     { key: 'employeeId', label: 'Funcionário', type: 'dropdown', required: true},
-    { key: 'enrollNumber', label: 'Número', type: 'number' },
+    { key: 'enrollNumber', label: 'Número', type: 'string' },
     { key: 'employeeName', label: 'Nome do Funcionário', type: 'string' },
     { key: 'inOutMode', label: 'Modo de Entrada/Saída', type: 'number' },
     { key: 'observation', label: 'Observação', type: 'string' },
@@ -163,4 +163,17 @@ export const employeeCardFields = [
     { key: 'devicePassword', label: 'Senha do Dispositivo', type: 'string' },
     { key: 'devicePrivelage', label: 'Privilégio do Dispositivo', type: 'number' },
     { key: 'deviceEnabled', label: 'Dispositivo Activado', type: 'boolean' },
+];
+
+export const employeeFPFields = [
+    { key: 'FPTmpIndex', label: 'Índice da Biometria Digital', type: 'number' },
+    { key: 'FPTmpData', label: 'Dados da Biometria Digital', type: 'string' },
+    { key: 'FPTmpLength', label: 'Comprimento da Biometria Digital', type: 'number' },
+    { key: 'FPTmpFlag', label: 'Validade da Biometria Digital', type: 'number' },
+];
+
+export const employeeFaceFields = [
+    { key: 'FaceTmpIndex', label: 'Índice da Biometria Facial', type: 'number' },
+    { key: 'FaceTmpData', label: 'Dados da Biometria Facial', type: 'string' },
+    { key: 'FaceTmpLength', label: 'Comprimento da Biometria Facial', type: 'number' },
 ];

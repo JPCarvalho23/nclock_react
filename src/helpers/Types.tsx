@@ -135,7 +135,7 @@ export type EmployeeAttendanceTimes = {
     deviceId: string;
     deviceNumber: number;
     employeeId: string;
-    enrollNumber: number;
+    enrollNumber: string;
     employeeName: string;
     verifyMode: number;
     inOutMode: number;
@@ -188,8 +188,29 @@ export type EmployeeDevices = {
 };
 
 export type EmployeeCard = {
-    cardNumber: string;
+    [key: string]: any;
+    id: string;
     devicePassword: string;
     devicePrivelage: number;
     deviceEnabled: boolean;
+    cardNumber: string;
+};
+
+export type EmployeeAndCard = Partial<Employee> & Partial<EmployeeCard>;
+
+export type EmployeeFP = {
+    [key: string]: any;
+    id: string;
+    FPTmpIndex: number;
+    FPTmpData: string;
+    FPTmpLength: number;
+    FPTmpFlag: number;
+};
+
+export type EmployeeFace = {
+    [key: string]: any;
+    id: string;
+    FaceTmpIndex: number;
+    FaceTmpData: string;
+    FaceTmpLength: number;
 };

@@ -5,7 +5,7 @@ import '../../css/PagesStyles.css';
 import Button from 'react-bootstrap/Button';
 import DataTable, { TableColumn } from 'react-data-table-component';
 import { ColumnSelectorModal } from '../../modals/ColumnSelectorModal';
-import { Employee } from '../../helpers/Types';
+import { Employee, EmployeeCard } from '../../helpers/Types';
 import { CreateModalEmployees } from '../../modals/CreateModalEmployees';
 import { UpdateModalEmployees } from '../../modals/UpdateModalEmployees';
 import { DeleteModal } from '../../modals/DeleteModal';
@@ -35,6 +35,8 @@ export const Employees = () => {
         handleAddEmployee,
         handleUpdateEmployee,
         handleDeleteEmployee,
+        handleAddEmployeeCard,
+        handleUpdateEmployeeCard
     } = useContext(PersonsContext) as PersonsContextType;
     const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>([]);
     const [filterText, setFilterText] = useState('');
@@ -51,10 +53,6 @@ export const Employees = () => {
     const [filters, setFilters] = useState<Filters>({});
     const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([]);
 
-    // Busca os departamentos, grupos e funcionários
-    useEffect(() => {
-        fetchAllData()
-    }, [fetchAllData]);
 
     // Define a função de busca dos funcionários
     const fetchEmployees = () => {
@@ -67,19 +65,31 @@ export const Employees = () => {
         });
     };
 
-    // Função para adicionar um funcionário
-    const addEmployee = async (employee: Employee) => {
-        await handleAddEmployee(employee);
-        setShowAddModal(false);
+    // Função para adicionar um funcionário e um cartão
+    const addEmployeeAndCard = async (employee: Partial<Employee>, card: Partial<EmployeeCard>) => {
+        await handleAddEmployee(employee as Employee);
+        const employees = await fetchAllEmployees();
+        const lastEmployee = employees[employees.length - 1];
+        const employeeCard = {
+            ...card,
+            employeeID: lastEmployee.employeeID
+        };
+        await handleAddEmployeeCard(employeeCard as EmployeeCard);
         refreshEmployees();
-    }
-
-    // Função para atualizar um funcionário
-    const updateEmployee = async (employee: Employee) => {
+        setShowAddModal(false);
+    };
+ 
+    // Função para atualizar um funcionário e um cartão
+    const updateEmployeeAndCard = async (employee: Employee, card: Partial<EmployeeCard>) => {
         await handleUpdateEmployee(employee);
+        if (card.cardId) {
+            await handleUpdateEmployeeCard(card as EmployeeCard);
+        } else {
+            await handleAddEmployeeCard(card as EmployeeCard);
+        }
         setShowUpdateModal(false);
         refreshEmployees();
-    }
+    };
 
     // Função para deletar um funcionário
     const deleteEmployee = async (employeeId: string) => {
@@ -88,14 +98,13 @@ export const Employees = () => {
         refreshEmployees();
     }
 
-    // Busca os funcionários
+    // Busca todos os dados
     useEffect(() => {
         fetchEmployees();
     }, []);
 
     // Atualiza os funcionários
     const refreshEmployees = () => {
-        fetchAllData();
         fetchEmployees();
         setSelectedEmployeeIds([]);
     };
@@ -279,7 +288,7 @@ export const Employees = () => {
                 <div className="content-container">
                     <Split className='split' sizes={[20, 80]} minSize={100} expandToMin={true} gutterSize={15} gutterAlign="center" snapOffset={0} dragInterval={1}>
                         <div className="treeview-container">
-                            <TreeViewData onSelectEmployees={handleSelectFromTreeView} />
+                            <TreeViewData onSelectEmployees={handleSelectFromTreeView} entity='employees' />
                         </div>
                         <div className="datatable-container">
                             <div className="datatable-title-text">
@@ -325,7 +334,7 @@ export const Employees = () => {
                     title="Adicionar Funcionário"
                     open={showAddModal}
                     onClose={() => setShowAddModal(false)}
-                    onSave={addEmployee}
+                    onSave={addEmployeeAndCard}
                     fields={employeeFields}
                     initialValues={initialData || {}}
                 />
@@ -334,7 +343,7 @@ export const Employees = () => {
                         open={showUpdateModal}
                         onClose={handleCloseUpdateModal}
                         onDuplicate={handleDuplicate}
-                        onUpdate={updateEmployee}
+                        onUpdate={updateEmployeeAndCard}
                         entity={selectedEmployee}
                         fields={employeeFields}
                         title="Atualizar Funcionário"
